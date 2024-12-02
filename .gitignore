@@ -28,3 +28,6 @@ build/
 
 # Visual code
 settings.json
+
+# Docker volumes
+docker/data

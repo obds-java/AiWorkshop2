@@ -1,13 +1,13 @@
-package com.orange.ai_worskhop_2;
+package com.orange.ai_worskhop;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AiWorskhop2Application {
+public class AiWorkshop {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AiWorskhop2Application.class, args);
+		SpringApplication.run(AiWorkshop.class, args);
 	}
 
 }
