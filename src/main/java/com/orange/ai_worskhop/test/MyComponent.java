@@ -1,16 +1,23 @@
-package com.orange.ai_worskhop;
+package com.orange.ai_worskhop.test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.weaviate.client.WeaviateClient;
 import io.weaviate.client.base.Result;
 import io.weaviate.client.v1.data.model.WeaviateObject;
 import io.weaviate.client.v1.data.replication.model.ConsistencyLevel;
+import io.weaviate.client.v1.graphql.model.GraphQLResponse;
+import io.weaviate.client.v1.graphql.query.argument.NearTextArgument;
+import io.weaviate.client.v1.graphql.query.builder.GetBuilder;
+import io.weaviate.client.v1.graphql.query.fields.Field;
+import io.weaviate.client.v1.graphql.query.fields.Fields;
 
 @RestController("/")
 public class MyComponent {
@@ -65,5 +72,45 @@ System.out.println(result3.getResult());
         .withVector()
         .run();
         return objsAdditionalT.getResult();
+    }
+
+    @GetMapping("find")
+    public List<String> find(@RequestParam(name = "text") String text) {
+      List<String> response = new ArrayList<String>();
+
+      NearTextArgument nearText = NearTextArgument.builder()
+        .concepts(new String[]{ text })
+        .build();
+
+      Fields fields = Fields.builder()
+        .fields(new Field[]{
+          Field.builder().name("title").build(),
+          Field.builder().name("author").build(),
+          Field.builder().name("_additional").fields(new Field[]{
+            Field.builder().name("distance").build()
+          }).build()
+        })
+        .build();
+
+      String query = GetBuilder.builder()
+        .className("Book")
+        .fields(fields)
+        .withNearTextFilter(nearText)
+        .limit(2)
+        .build()
+        .buildQuery();
+
+      Result<GraphQLResponse> result = client.graphQL().raw().withQuery(query).run();
+      Map data = (Map<String, Map>)result.getResult().getData();
+      Map get = (Map)data.get("Get");
+      List<Map> books = (List)get.get("Book");
+      for (Map book : books) {
+        Object author = book.get("author");
+        Object title = book.get("title");
+        Object distance = ((Map)book.get("_additional")).get("distance");
+        response.add("Author: " + author + "; Title: " + title + "; Distance: " + distance);
+      }
+
+      return response;
     }
 }

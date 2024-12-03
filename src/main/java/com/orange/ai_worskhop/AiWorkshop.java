@@ -9,5 +9,4 @@ public class AiWorkshop {
 	public static void main(String[] args) {
 		SpringApplication.run(AiWorkshop.class, args);
 	}
-
 }

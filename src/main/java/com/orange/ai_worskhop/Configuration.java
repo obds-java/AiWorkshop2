@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import io.weaviate.client.Config;
 import io.weaviate.client.WeaviateClient;
 
+// TODO move the properties to application.yml using an LLM
 @org.springframework.context.annotation.Configuration
 public class Configuration {
     
