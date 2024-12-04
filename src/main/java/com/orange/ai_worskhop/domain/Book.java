@@ -3,21 +3,20 @@ package com.orange.ai_worskhop.domain;
 import java.util.List;
 
 public class Book {
-    private String title;
-    private String author;
+    private Metadata metadata;
     private List<String> chunks;
 
-    public Book(String title, String author) {
-        this.title = title;
-        this.author = author;
+    public Book(Metadata metadata, List<String> chunks) {
+        this.metadata = metadata;
+        this.chunks = chunks;
     }
 
-    public String getTitle() {
-        return title;
+    public Metadata getMetadata() {
+        return metadata;
     }
 
-    public String getAuthor() {
-        return author;
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
     }
 
     public List<String> getChunks() {

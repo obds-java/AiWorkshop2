@@ -34,9 +34,11 @@ public class VectorRepository {
         .withID(UUID.randomUUID().toString())
         .withProperties(
           Map.of(
-          "title", book.getTitle(),
-          "author", book.getAuthor(),
-          "content", chunk
+          "title", book.getMetadata().getTitle(),
+          "author", book.getMetadata().getAuthor(),
+          "releaseDate", book.getMetadata().getReleaseDate(),
+          "language", book.getMetadata().getLanguage(),
+          "chunk", chunk
           ))
         .withConsistencyLevel(ConsistencyLevel.QUORUM)
         .run();
@@ -47,15 +49,18 @@ public class VectorRepository {
     /**
      * https://weaviate.io/developers/weaviate/search/similarity
      */
-    public void find(String text) {
+    public Book find(String text) {
       NearTextArgument nearText = NearTextArgument.builder()
         .concepts(new String[]{ text })
         .build();
 
-      Fields fields = Fields.builder()
+        Fields fields = Fields.builder()
         .fields(new Field[]{
-          Field.builder().name("question").build(),
-          Field.builder().name("answer").build(),
+          Field.builder().name("title").build(),
+          Field.builder().name("author").build(),
+          Field.builder().name("releaseDate").build(),
+          Field.builder().name("language").build(),
+          Field.builder().name("chunk").build(),
           Field.builder().name("_additional").fields(new Field[]{
             Field.builder().name("distance").build()
           }).build()
@@ -73,5 +78,7 @@ public class VectorRepository {
       Result<GraphQLResponse> result = client.graphQL().raw().withQuery(query).run();
       Object data = result.getResult().getData();
       System.out.println(data);
+
+      return null;
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,7 +29,8 @@ import io.weaviate.client.v1.graphql.query.builder.GetBuilder;
 import io.weaviate.client.v1.graphql.query.fields.Field;
 import io.weaviate.client.v1.graphql.query.fields.Fields;
 
-@RestController("/")
+@RestController
+@RequestMapping("test")
 public class MyComponent {
 
     @Autowired
@@ -78,7 +80,7 @@ System.out.println(result3.getResult());
         Result<List<WeaviateObject>> objsAdditionalT = client.data()
         .objectsGetter()
         // .withID("44985632-4fbc-4529-9a1f-42cdcba846d1")
-        .withClassName("Book")
+        .withClassName("Paragraph")
         // .withAdditional("classification")
         // .withAdditional("nearestNeighbors")
         .withVector()
@@ -98,6 +100,9 @@ System.out.println(result3.getResult());
         .fields(new Field[]{
           Field.builder().name("title").build(),
           Field.builder().name("author").build(),
+          Field.builder().name("releaseDate").build(),
+          Field.builder().name("language").build(),
+          Field.builder().name("chunk").build(),
           Field.builder().name("_additional").fields(new Field[]{
             Field.builder().name("distance").build()
           }).build()
@@ -105,7 +110,7 @@ System.out.println(result3.getResult());
         .build();
 
       String query = GetBuilder.builder()
-        .className("Book")
+        .className("Paragraph")
         .fields(fields)
         .withNearTextFilter(nearText)
         .limit(2)
@@ -114,13 +119,15 @@ System.out.println(result3.getResult());
 
       Result<GraphQLResponse> result = client.graphQL().raw().withQuery(query).run();
       Map data = (Map<String, Map>)result.getResult().getData();
+      System.out.println(data);
       Map get = (Map)data.get("Get");
-      List<Map> books = (List)get.get("Book");
+      List<Map> books = (List)get.get("Paragraph");
       for (Map book : books) {
         Object author = book.get("author");
         Object title = book.get("title");
+        Object chunk = book.get("chunk");
         Object distance = ((Map)book.get("_additional")).get("distance");
-        response.add("Author: " + author + "; Title: " + title + "; Distance: " + distance);
+        response.add("Author: " + author + "; Title: " + title + "; Distance: " + distance + "; Chunk: " + chunk);
       }
 
       return response;

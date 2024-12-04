@@ -1,8 +1,12 @@
 package com.orange.ai_worskhop.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import com.orange.ai_worskhop.domain.Metadata;
@@ -52,7 +56,74 @@ public class BookService {
         return metadata;
     }
 
-    public void chunkBook() {
+    /**
+     * Splits an HTML text into chunks based on paragraph content.
+     * Filters out invalid chunks and cleans up the text.
+     * 
+     * @param html the HTML content to split
+     * @return List of valid text chunks
+     */
+    public List<String> chunkBook(String html) {
+        Document doc = Jsoup.parse(html);
+        List<String> chunks = new ArrayList<>();
+        
+        // Select all paragraph elements
+        Elements paragraphs = doc.select("p");
+        StringBuilder currentGroup = new StringBuilder();
+        List<String> finalChunks = new ArrayList<>();
 
+        // Process paragraphs
+        for (Element p : paragraphs) {
+            String text = p.text().trim();
+            
+            // Keep adding text to the current chunk (group) until it reaches 500 characters
+            if (isValidChunk(text)) {
+                if (currentGroup.length() + text.length() <= 500) {
+                    if (currentGroup.length() > 0) {
+                        currentGroup.append(" ");
+                    }
+                    currentGroup.append(text);
+                } else {
+                    if (currentGroup.length() > 0) {
+                        finalChunks.add(currentGroup.toString());
+                        currentGroup = new StringBuilder(text);
+                    } else {
+                        finalChunks.add(text);
+                    }
+                }
+            }
+        }
+
+        // Add any remaining text
+        if (currentGroup.length() > 0) {
+            finalChunks.add(currentGroup.toString());
+        }
+
+        return finalChunks;
+    }
+    
+    /**
+     * Validates a text chunk to ensure it contains meaningful content.
+     * 
+     * @param text the chunk to validate
+     * @return true if the chunk is valid
+     */
+    private boolean isValidChunk(String text) {
+        // Skip empty or very short texts
+        if (text == null || text.length() < 10) {
+            return false;
+        }
+        
+        // Skip chunks that are just formatting or contain no letters
+        if (!text.matches(".*[a-zA-Z].*")) {
+            return false;
+        }
+        
+        // Skip chunks that are just HTML artifacts
+        if (text.matches("^[\\p{Punct}\\s]+$")) {
+            return false;
+        }
+        
+        return true;
     }
 }
