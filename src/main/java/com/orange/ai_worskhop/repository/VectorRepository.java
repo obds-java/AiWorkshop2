@@ -1,12 +1,10 @@
 package com.orange.ai_worskhop.repository;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 
 import com.orange.ai_worskhop.domain.Book;
 

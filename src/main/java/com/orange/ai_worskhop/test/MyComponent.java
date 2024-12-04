@@ -1,13 +1,22 @@
 package com.orange.ai_worskhop.test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.orange.ai_worskhop.domain.Metadata;
+import com.orange.ai_worskhop.service.BookService;
 
 import io.weaviate.client.WeaviateClient;
 import io.weaviate.client.base.Result;
@@ -24,6 +33,9 @@ public class MyComponent {
 
     @Autowired
     private WeaviateClient client;
+
+    @Autowired
+    private BookService bookService;
 
     @GetMapping("add")
     public void insertTestData() {
@@ -112,5 +124,48 @@ System.out.println(result3.getResult());
       }
 
       return response;
+    }
+
+    /**
+     * Endpoint to upload a single HTML file and extract metadata.
+     *
+     * @param file the uploaded HTML file
+     * @return ResponseEntity containing the extracted Metadata or an error message
+     */
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadHtmlFile(@RequestParam("file") MultipartFile file) {
+        // Validate file is not empty
+        if (file.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Please upload a non-empty HTML file.");
+        }
+
+        // Validate file type (optional)
+        String contentType = file.getContentType();
+        if (contentType == null || 
+            (!contentType.equalsIgnoreCase(MediaType.TEXT_HTML_VALUE) 
+             && !contentType.equalsIgnoreCase("application/xhtml+xml"))) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Please upload a valid HTML file.");
+        }
+
+        try {
+            // Read the file content as a string
+            String htmlContent = new String(file.getBytes());
+
+            // Extract metadata
+            Metadata metadata = bookService.extractMetadata(htmlContent);
+
+            // Return the metadata as JSON
+            return ResponseEntity.ok(metadata);
+        } catch (IOException e) {
+            // Handle file read errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error reading the uploaded file.");
+        } catch (Exception e) {
+            // Handle other errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred while processing the file.");
+        }
     }
 }
