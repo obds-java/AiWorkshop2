@@ -7,6 +7,7 @@
 
 docker-compose down --volumes --remove-orphans
 
+curl -X POST -F "file=@/<path_to_project>/AiWorkshop2/dataset/a_dolls_house.html" http://localhost:8080/upload
 
 ## Basic premise
 

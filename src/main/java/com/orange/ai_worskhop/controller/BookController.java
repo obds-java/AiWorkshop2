@@ -14,11 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.ai_worskhop.domain.Book;
-import com.orange.ai_worskhop.domain.Metadata;
 import com.orange.ai_worskhop.repository.VectorRepository;
 import com.orange.ai_worskhop.service.BookService;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController("/")
+@Slf4j
 public class BookController {
 
     @Autowired
@@ -28,66 +30,66 @@ public class BookController {
     private VectorRepository vectorRepository;
 
     /**
-     * Endpoint to upload a single HTML file and extract metadata.
+     * Endpoint to upload a single HTML file, extract metadata, vectorize and save the book.
      *
      * @param file the uploaded HTML file
      * @return ResponseEntity containing the extracted Metadata or an error message
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadHtmlFile(@RequestParam("file") MultipartFile file) {
-        // Validate file is not empty
-        if (file.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Please upload a non-empty HTML file.");
-        }
-
-        // Validate file type (optional)
-        String contentType = file.getContentType();
-        if (contentType == null || 
-            (!contentType.equalsIgnoreCase(MediaType.TEXT_HTML_VALUE) 
-             && !contentType.equalsIgnoreCase("application/xhtml+xml"))) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Please upload a valid HTML file.");
-        }
-
         try {
-            // Read the file content as a string
+            validateFile(file);
             String htmlContent = new String(file.getBytes());
-
-            // Extract metadata
-            Metadata metadata = bookService.extractMetadata(htmlContent);
-
-            // Chunk book
-            List<String> chunks = bookService.chunkBook(htmlContent);
-
-            // Create Book
-            Book book = new Book(metadata, chunks);
-
-            // Save book to Weaviate
-            vectorRepository.saveBook(book);
-
-            // Return the metadata as JSON
+            Book book = bookService.createBook(htmlContent);
             return ResponseEntity.ok(book);
         } catch (IOException e) {
             // Handle file read errors
+            log.error("Error reading the uploaded file", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error reading the uploaded file.");
+        } catch (IllegalArgumentException e) {
+            // Handle validation errors
+            log.error("Error processing the uploaded file", e);
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             // Handle other errors
+            log.error("Error processing the uploaded file", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("An error occurred while processing the file.");
         }
     }
 
+    private void validateFile(MultipartFile file) {
+        // Validate file is not empty
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Please upload a non-empty HTML file.");
+        }
+
+        // Validate file type (optional)
+        String contentType = file.getContentType();
+        if (contentType == null ||
+                (!contentType.equalsIgnoreCase(MediaType.TEXT_HTML_VALUE)
+                        && !contentType.equalsIgnoreCase("application/xhtml+xml"))) {
+            throw new IllegalArgumentException("Please upload a valid HTML file.");
+        }
+    }
+
+    /**
+     * Endpoint to search for books by text similarity.
+     *
+     * @param text the text to search for
+     * @return ResponseEntity containing the list of books or an error message
+     */
     @GetMapping("/search")
-    public ResponseEntity<List<String>> searchText(@RequestParam String text) {
+    public ResponseEntity<List<Book>> searchText(@RequestParam(name = "text") String text) {
         try {
-            vectorRepository.find(text);
-            return ResponseEntity.ok().build();
+            List<Book> books = vectorRepository.find(text);
+            return ResponseEntity.ok(books);
         } catch (Exception e) {
+            log.error("Error searching for books", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     
-}  
+}

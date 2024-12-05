@@ -7,14 +7,34 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.orange.ai_worskhop.domain.Book;
 import com.orange.ai_worskhop.domain.Metadata;
+import com.orange.ai_worskhop.repository.VectorRepository;
 
 @Service
 public class BookService {
-    
-/**
+    @Autowired
+    private VectorRepository vectorRepository;
+
+    /**
+     * Creates a new Book object from the given HTML content.
+     * Extracts metadata and splits the content into chunks.
+     * Stores the book in the database as a vector.
+     * 
+     * @param htmlContent the HTML content as a string
+     * @return the created Book object
+     */
+    public Book createBook(String htmlContent) {
+        Metadata metadata = extractMetadata(htmlContent);
+        List<String> chunks = chunkBook(htmlContent);
+        Book book = new Book(metadata, chunks);
+        return vectorRepository.saveBook(book);
+    }
+
+    /**
      * Extracts metadata from the given HTML string.
      *
      * @param html the HTML content as a string
@@ -65,8 +85,7 @@ public class BookService {
      */
     public List<String> chunkBook(String html) {
         Document doc = Jsoup.parse(html);
-        List<String> chunks = new ArrayList<>();
-        
+
         // Select all paragraph elements
         Elements paragraphs = doc.select("p");
         StringBuilder currentGroup = new StringBuilder();
@@ -75,7 +94,7 @@ public class BookService {
         // Process paragraphs
         for (Element p : paragraphs) {
             String text = p.text().trim();
-            
+
             // Keep adding text to the current chunk (group) until it reaches 500 characters
             if (isValidChunk(text)) {
                 if (currentGroup.length() + text.length() <= 500) {
@@ -101,7 +120,7 @@ public class BookService {
 
         return finalChunks;
     }
-    
+
     /**
      * Validates a text chunk to ensure it contains meaningful content.
      * 
@@ -113,17 +132,17 @@ public class BookService {
         if (text == null || text.length() < 10) {
             return false;
         }
-        
+
         // Skip chunks that are just formatting or contain no letters
         if (!text.matches(".*[a-zA-Z].*")) {
             return false;
         }
-        
+
         // Skip chunks that are just HTML artifacts
         if (text.matches("^[\\p{Punct}\\s]+$")) {
             return false;
         }
-        
+
         return true;
     }
 }
