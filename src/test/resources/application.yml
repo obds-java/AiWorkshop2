@@ -1,13 +1,8 @@
 spring:
   application:
     name: ai-worskhop-2
-  ai:
-    vectorstore:
-      weaviate:
-        host: localhost:8080
-        scheme: http
-        api-key: your-weaviate-api-key
-        initialize-schema: true
-
-    openai:
-        api-key: open-ai-api-key
+openai:
+  api:
+    key: "bogus key"
+    model: "gpt-4o-mini"
+    url: "https://api.openai.com/v1/completions"

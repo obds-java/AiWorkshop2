@@ -12,12 +12,10 @@ services:
       DEFAULT_VECTORIZER_MODULE: text2vec-openai
       ENABLE_MODULES: 'text2vec-openai,qna-openai'
       OPENAI_APIKEY: ''
-      # DEFAULT_VECTORIZER_MODULE: 'none'
-      # ENABLE_MODULES: ''
       CLUSTER_HOSTNAME: 'node1'
     volumes:
       - ./data:/data
-  ai-workshop:
-    image: ai-workshop:latest
-    ports:
-      - "8081:8080"
+  # ai-workshop:
+  #   image: ai-workshop:latest
+  #   ports:
+  #     - "8081:8080"

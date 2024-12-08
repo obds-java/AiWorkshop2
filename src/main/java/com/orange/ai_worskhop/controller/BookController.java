@@ -2,6 +2,7 @@ package com.orange.ai_worskhop.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.orange.ai_worskhop.domain.Book;
 import com.orange.ai_worskhop.repository.VectorRepository;
 import com.orange.ai_worskhop.service.BookService;
+import com.orange.ai_worskhop.service.OpenAIService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,10 +29,14 @@ public class BookController {
     private BookService bookService;
 
     @Autowired
+    private OpenAIService openAIService;
+
+    @Autowired
     private VectorRepository vectorRepository;
 
     /**
-     * Endpoint to upload a single HTML file, extract metadata, vectorize and save the book.
+     * Endpoint to upload a single HTML file, extract metadata, vectorize and save
+     * the book.
      *
      * @param file the uploaded HTML file
      * @return ResponseEntity containing the extracted Metadata or an error message
@@ -91,5 +97,29 @@ public class BookController {
         }
     }
 
-    
+    @GetMapping("/generate")
+    public String generate(@RequestParam(name = "prompt") String prompt) {
+        return openAIService.generateText(prompt);
+    }
+
+    @GetMapping("/answer")
+    public ResponseEntity<String> answerQuestion(@RequestParam(name = "question") String question) {
+        try {
+            List<Book> relevantBooks = vectorRepository.find(question);
+            String context = relevantBooks.stream()
+                    .flatMap((Book book) -> book.getChunks().stream())
+                    .collect(Collectors.joining());
+
+            String prompt = String.format("Based on the following context:\n%s\n\nAnswer this question: %s",
+                    context, question);
+
+            String answer = openAIService.generateText(prompt);
+            return ResponseEntity.ok(answer);
+        } catch (Exception e) {
+            log.error("Error generating answer", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error generating answer to question");
+        }
+    }
+
 }

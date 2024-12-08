@@ -1,0 +1,96 @@
+openapi: 3.0.0
+        info:
+            title: Book API
+            description: API for managing and searching books
+            version: 1.0.0
+        paths:
+            /upload:
+                post:
+                    summary: Upload an HTML file and extract book metadata
+                    requestBody:
+                        content:
+                            multipart/form-data:
+                                schema:
+                                    type: object
+                                    properties:
+                                        file:
+                                            type: string
+                                            format: binary
+                    responses:
+                        '200':
+                            description: Book metadata successfully extracted
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/Book'
+                        '400':
+                            description: Bad request - invalid file
+                        '500':
+                            description: Internal server error
+            /search:
+                get:
+                    summary: Search for books by text similarity
+                    parameters:
+                        - name: text
+                            in: query
+                            required: true
+                            schema:
+                                type: string
+                    responses:
+                        '200':
+                            description: List of matching books
+                            content:
+                                application/json:
+                                    schema:
+                                        type: array
+                                        items:
+                                            $ref: '#/components/schemas/Book'
+                        '500':
+                            description: Internal server error
+            /generate:
+                get:
+                    summary: Generate text based on prompt
+                    parameters:
+                        - name: prompt
+                            in: query
+                            required: true
+                            schema:
+                                type: string
+                    responses:
+                        '200':
+                            description: Generated text
+                            content:
+                                text/plain:
+                                    schema:
+                                        type: string
+            /answer:
+                get:
+                    summary: Answer questions based on book context
+                    parameters:
+                        - name: question
+                            in: query
+                            required: true
+                            schema:
+                                type: string
+                    responses:
+                        '200':
+                            description: Generated answer
+                            content:
+                                text/plain:
+                                    schema:
+                                        type: string
+                        '500':
+                            description: Internal server error
+        components:
+            schemas:
+                Book:
+                    type: object
+                    properties:
+                        id:
+                            type: string
+                        title:
+                            type: string
+                        chunks:
+                            type: array
+                            items:
+                                type: string

@@ -14,7 +14,6 @@ import com.orange.ai_worskhop.domain.Metadata;
 
 import io.weaviate.client.WeaviateClient;
 import io.weaviate.client.base.Result;
-import io.weaviate.client.v1.data.model.WeaviateObject;
 import io.weaviate.client.v1.data.replication.model.ConsistencyLevel;
 import io.weaviate.client.v1.graphql.model.GraphQLResponse;
 import io.weaviate.client.v1.graphql.query.argument.NearTextArgument;
@@ -26,7 +25,7 @@ import io.weaviate.client.v1.graphql.query.fields.Fields;
 public class VectorRepository {
 
   private static final String CLASS_NAME = "Paragraph";
-  private static final int SEARCH_LIMIT = 2;
+  private static final int SEARCH_LIMIT = 10;
 
   @Autowired
   private WeaviateClient client;
@@ -34,7 +33,7 @@ public class VectorRepository {
   public Book saveBook(Book book) {
     // Iterate the chunks of the book paralelly
     book.getChunks().parallelStream().forEach(chunk -> {
-      Result<WeaviateObject> result = client.data().creator()
+      client.data().creator()
           .withClassName(CLASS_NAME)
           .withID(UUID.randomUUID().toString())
           .withProperties(
@@ -54,6 +53,15 @@ public class VectorRepository {
    * https://weaviate.io/developers/weaviate/search/similarity
    */
   public List<Book> find(String text) {
+    String query = createFindQuery(text);
+
+    Result<GraphQLResponse> result = client.graphQL().raw().withQuery(query).run();
+    Map<Metadata, Book> bookMap = processResult(result);
+
+    return new ArrayList<>(bookMap.values());
+  }
+
+  private String createFindQuery(String text) {
     NearTextArgument nearText = NearTextArgument.builder()
         .concepts(new String[] { text })
         .build();
@@ -78,8 +86,10 @@ public class VectorRepository {
         .limit(SEARCH_LIMIT)
         .build()
         .buildQuery();
+    return query;
+  }
 
-    Result<GraphQLResponse> result = client.graphQL().raw().withQuery(query).run();
+  private Map<Metadata, Book> processResult(Result<GraphQLResponse> result) {
     Map data = (Map<String, Map>) result.getResult().getData();
 
     Map get = (Map) data.get("Get");
@@ -104,7 +114,6 @@ public class VectorRepository {
       Book book = bookMap.computeIfAbsent(metadata, k -> new Book(metadata, new ArrayList<>()));
       book.getChunks().add(chunk.toString());
     }
-
-    return new ArrayList<>(bookMap.values());
+    return bookMap;
   }
 }

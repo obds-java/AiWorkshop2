@@ -1,0 +1,33 @@
+@startuml
+class Book {
+    -metadata: Metadata
+    -chunks: List<String>
+    +Book(metadata: Metadata, chunks: List<String>)
+    +getMetadata(): Metadata
+    +setMetadata(metadata: Metadata): void
+    +getChunks(): List<String>
+    +setChunks(chunks: List<String>): void
+}
+
+class Metadata {
+    -title: String
+    -author: String
+    -releaseDate: String
+    -language: String
+    +Metadata()
+    +Metadata(title: String, author: String, releaseDate: String, language: String)
+    +getTitle(): String
+    +setTitle(title: String): void
+    +getAuthor(): String
+    +setAuthor(author: String): void
+    +getReleaseDate(): String
+    +setReleaseDate(releaseDate: String): void
+    +getLanguage(): String
+    +setLanguage(language: String): void
+    +toString(): String
+    +hashCode(): int
+    +equals(obj: Object): boolean
+}
+
+Book *-- Metadata
+@enduml
