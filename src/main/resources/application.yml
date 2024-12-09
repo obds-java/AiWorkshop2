@@ -7,3 +7,6 @@ openai:
     model: "gpt-4o-mini"
     url: "https://api.openai.com/v1/chat/completions"
     temperature: 0.7
+weaviate:
+  protocol: "http"
+  url: "localhost:8081"
