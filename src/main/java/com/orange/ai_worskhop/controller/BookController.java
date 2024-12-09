@@ -40,8 +40,7 @@ public class BookController {
 
     @GetMapping("/search")
     public List<Book> searchBooks(@RequestParam("text") String text) {
-        // Method body not included
-        return null;
+        return vectorRepository.find(text);
     }
 
     @GetMapping("/generate")
