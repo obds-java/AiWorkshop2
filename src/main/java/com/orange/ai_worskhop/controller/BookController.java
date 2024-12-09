@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.ai_worskhop.domain.Book;
+import com.orange.ai_worskhop.repository.VectorRepository;
 import com.orange.ai_worskhop.service.BookService;
 
 @RestController
@@ -22,11 +23,16 @@ public class BookController {
     @Autowired
     BookService bookService;
 
+    @Autowired
+    VectorRepository vectorRepository;
+
     @PostMapping("/upload")
     public Book uploadFile(@RequestParam("file") MultipartFile file) {
         try {
             String htmlContent = new String(file.getBytes(), StandardCharsets.UTF_8);
-            return bookService.createBookFromHtml(htmlContent);
+            Book book = bookService.createBookFromHtml(htmlContent);
+            vectorRepository.saveBook(book);
+            return book;
         } catch (IOException e) {
             throw new RuntimeException("Failed to read file", e);
         }
