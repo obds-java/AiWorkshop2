@@ -32,16 +32,16 @@ public class VectorRepository {
 
   public Book saveBook(Book book) {
     // Iterate the chunks of the book paralelly
-    book.getChunks().parallelStream().forEach(chunk -> {
+    book.chunks().parallelStream().forEach(chunk -> {
       client.data().creator()
           .withClassName(CLASS_NAME)
           .withID(UUID.randomUUID().toString())
           .withProperties(
               Map.of(
-                  "title", book.getMetadata().getTitle(),
-                  "author", book.getMetadata().getAuthor(),
-                  "releaseDate", book.getMetadata().getReleaseDate(),
-                  "language", book.getMetadata().getLanguage(),
+                  "title", book.metadata().title(),
+                  "author", book.metadata().author(),
+                  "releaseDate", book.metadata().releaseDate(),
+                  "language", book.metadata().language(),
                   "chunk", chunk))
           .withConsistencyLevel(ConsistencyLevel.QUORUM)
           .run();
@@ -112,7 +112,7 @@ public class VectorRepository {
           language.toString());
 
       Book book = bookMap.computeIfAbsent(metadata, k -> new Book(metadata, new ArrayList<>()));
-      book.getChunks().add(chunk.toString());
+      book.chunks().add(chunk.toString());
     }
     return bookMap;
   }

@@ -10,10 +10,17 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
+import com.orange.ai_worskhop.domain.Book;
 import com.orange.ai_worskhop.domain.Metadata;
 
 @Service
 public class BookService {
+
+    public Book createBookFromHtml(String html) {
+        Metadata metadata = extractMetadata(html);
+        List<String> chunks = extractParagraphs(html);
+        return new Book(metadata, chunks);
+    }
 
     public Metadata extractMetadata(String html) {
         Document document = Jsoup.parse(html);
@@ -46,7 +53,7 @@ public class BookService {
 
         return chunks;
     }
-    
+
     public List<String> extractParagraphs(String html) {
         Document document = Jsoup.parse(html);
         Elements paragraphs = document.select("p");

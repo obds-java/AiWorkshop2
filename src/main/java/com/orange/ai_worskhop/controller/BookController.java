@@ -1,7 +1,10 @@
 package com.orange.ai_worskhop.controller;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,15 +13,23 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.ai_worskhop.domain.Book;
+import com.orange.ai_worskhop.service.BookService;
 
 @RestController
 @RequestMapping("/api")
 public class BookController {
 
+    @Autowired
+    BookService bookService;
+
     @PostMapping("/upload")
     public Book uploadFile(@RequestParam("file") MultipartFile file) {
-        // Method body not included
-        return null;
+        try {
+            String htmlContent = new String(file.getBytes(), StandardCharsets.UTF_8);
+            return bookService.createBookFromHtml(htmlContent);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read file", e);
+        }
     }
 
     @GetMapping("/search")
