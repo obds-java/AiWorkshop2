@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.orange.ai_worskhop.domain.Book;
 import com.orange.ai_worskhop.repository.VectorRepository;
 import com.orange.ai_worskhop.service.BookService;
+import com.orange.ai_worskhop.service.OpenAiService;
 
 @RestController
 @RequestMapping("/api")
@@ -22,6 +23,9 @@ public class BookController {
 
     @Autowired
     BookService bookService;
+
+    @Autowired
+    OpenAiService openAiService;
 
     @Autowired
     VectorRepository vectorRepository;
@@ -51,7 +55,15 @@ public class BookController {
 
     @GetMapping("/answer")
     public String answerQuestion(@RequestParam("question") String question) {
-        // Method body not included
-        return null;
+        List<Book> books = searchBooks(question);
+
+        StringBuilder context = new StringBuilder();
+        for (Book book : books) {
+            context.append(String.join(" ", book.chunks()));
+            context.append("\n");
+        }
+        question += context.toString() + "\nAnswer the following question only using data from the context above. Question: " + question;
+
+        return openAiService.getChatCompletion(question);
     }
 }
